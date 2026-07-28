@@ -1,6 +1,6 @@
 # claude-commands
 
-Five general-purpose slash commands for [Claude Code](https://claude.com/claude-code),
+Six general-purpose slash commands for [Claude Code](https://claude.com/claude-code),
 extracted from daily use in a real working setup. No framework, no install script — each
 command is one markdown file. Copy what you want, edit freely.
 
@@ -20,7 +20,7 @@ cp commands/*.md ~/.claude/commands/
 cp commands/*.md <your-repo>/.claude/commands/
 ```
 
-Then invoke by filename: `/captain`, `/lacuna`, `/low-then-rev`, `/redteam`, `/vet-repo`.
+Then invoke by filename: `/captain`, `/lacuna`, `/low-then-rev`, `/redteam`, `/tidy`, `/vet-repo`.
 
 ## The commands
 
@@ -58,6 +58,15 @@ assumptions, hidden failure modes, missing guardrails, privacy/credential/destru
 risk, and anything that should be promoted to a reusable script or skill. Then do the best
 *lean* version of the task — the check exists to prevent both blind execution and
 overbuilding.
+
+### `/tidy` — workspace housekeeping, report-first
+
+Surface stray files, backup cruft, orphans, duplicates, and broken internal links as a
+review list. Report-only by default; `--apply` prunes only the pre-listed safe tier after
+an explicit yes. Starts with a sensitive-data sweep whose two rules were paid for with real
+incidents: no directory exclusions on detection, and match every identifier format — a
+check narrower than the rule it enforces reports green. Deliberately standalone: cleanup
+bundled into an end-of-session flow is how accidental deletions happen.
 
 ### `/vet-repo` — quarantine and vet an untrusted repo
 
