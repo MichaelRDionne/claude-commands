@@ -29,7 +29,8 @@ Then invoke by filename: `/captain`, `/lacuna`, `/low-then-rev`, `/redteam`, `/v
 Runs the turn on your strongest model (via `model:` frontmatter — edit it to your top
 tier), which plans inline, routes bounded tasks down to cheaper subagents
 (haiku/sonnet/opus per a routing table), then reviews everything and delivers its own
-verdict. The inversion that matters: the expensive model is the *judge*, not the workhorse.
+verdict. The inversion that matters: the expensive model does the judging while cheap
+models do the typing.
 Includes a context budget (30% checkpoint / 35% ceiling) and a
 plan-approval gate so nothing spawns before you see the troop layout.
 
@@ -47,8 +48,8 @@ signature.
 A thread-level operating mode: start at the cheapest adequate model/effort/verbosity,
 escalate automatically on observable triggers (security, ambiguity, shared contracts,
 repeated failure), climb one rung at a time, and — the part most setups miss — **come back
-down** once the hard part clears. The shape is a spike, not a ratchet. Includes the
-escalation criteria, the descent announcement, and a stop rule.
+down** once the hard part clears. The shape is a spike; a ratchet that never descends is
+the failure mode. Includes the escalation criteria, the descent announcement, and a stop rule.
 
 ### `/redteam` — pre-flight adversarial check
 
