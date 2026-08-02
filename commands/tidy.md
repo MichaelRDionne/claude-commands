@@ -20,15 +20,18 @@ Adapt this list to your workspace, then treat it as non-negotiable:
 - **Git internals** — `.git`, hooks, any separated git dir. Never prune or rewrite.
 - **Agent-instruction and rule files** — `CLAUDE.md`, `AGENTS.md`, canonical rule documents, anything another agent treats as its entry point.
 - **Permanent records** — append-only logs, immutable archives, templates. Flag oddities there; never prune them.
-- **Regulated or sensitive data stores** — any volume or directory holding protected data is out of scope for deletion entirely.
+- **Regulated or sensitive data stores** — any volume or directory holding protected data is out of scope entirely. "Entirely" means **no access of any kind from this command, not even a read-only existence check** (`ls`, `test -f`) while tracing a link. Resolve links that point into such a store from your workspace's own documentation; if that can't settle it, report the link as unverifiable. A fix pass in the originating setup ran two `ls` probes against a protected mount while chasing dead links, which is how this line got written.
 - Never delete a file this command didn't positively classify as Tier-A. When unsure → Tier-B (report only).
 
 ## Step 0 — sensitive-data sweep (run FIRST; data safety outranks tidiness)
 
-Before touching clutter, sweep the workspace for sensitive content sitting where it shouldn't be. Two rules, both paid for with real incidents in the originating setup:
+Before touching clutter, sweep the workspace for sensitive content sitting where it shouldn't be. Three rules, all paid for with real incidents in the originating setup:
 
 1. **No directory exclusions on detection.** You may exclude a directory from *deletion* (permanent record), never from *detection*. The worst finding in the originating setup sat in a directory the previous sweep had excluded as "obviously fine."
 2. **Match every identifier format, not one.** A sweep that greps for one naming convention reports green while free-text variants of the same data sail past. *A check narrower than the rule it enforces reports green.* Search names AND initials, dates in every separator style (dashes, slashes, month names), phone numbers in every form, IDs, and both file contents and filenames.
+3. **Known-positive gate before the word "clean" gets drafted.** Plant a synthetic fixture in the workspace that exercises **every** pattern class you are about to scan for — one line per class. Confirm each class flags it. Then delete the fixture and verify the deletion. If any class misses, the sweep is broken; fix it before scanning for real. Never write "clean" for a class that has not demonstrably gone red once this run, and note that a truncated display (`head -N`) is not a class result — confirm against unbounded output or a count.
+
+Rule 3 was added after the third recurrence of the same shape. Rules 1 and 2 were each written in response to a sweep that reported green and was wrong, and each time the fix was to widen the patterns. Widening does not prove the widened check runs. Only a fixture that goes red does.
 
 Also open the **cache payloads** — plugin caches, tool logs, page-snapshot directories. Deleting a source file does not remove its cache record; in the originating setup a sensitive name survived in a plugin cache after every other copy was gone. And report the **copy surfaces**: sync services, backups, and version history a finding has already reached — "it's only local" is usually false.
 

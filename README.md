@@ -49,7 +49,9 @@ A thread-level operating mode: start at the cheapest adequate model/effort/verbo
 escalate automatically on observable triggers (security, ambiguity, shared contracts,
 repeated failure), climb one rung at a time, and — the part most setups miss — **come back
 down** once the hard part clears. The shape is a spike; a ratchet that never descends is
-the failure mode. Includes the escalation criteria, the descent announcement, and a stop rule.
+the failure mode. Includes the escalation criteria, the descent announcement, a stop rule, and
+a recalibration section for what changes when you move onto a newer frontier model — it
+delegates more eagerly, self-verifies unprompted, and states file facts it never checked.
 
 ### `/redteam` — pre-flight adversarial check
 
@@ -63,10 +65,11 @@ overbuilding.
 
 Surface stray files, backup cruft, orphans, duplicates, and broken internal links as a
 review list. Report-only by default; `--apply` prunes only the pre-listed safe tier after
-an explicit yes. Starts with a sensitive-data sweep whose two rules were paid for with real
-incidents: no directory exclusions on detection, and match every identifier format — a
-check narrower than the rule it enforces reports green. Deliberately standalone: cleanup
-bundled into an end-of-session flow is how accidental deletions happen.
+an explicit yes. Starts with a sensitive-data sweep whose three rules were each paid for with
+a real incident: no directory exclusions on detection; match every identifier format — a
+check narrower than the rule it enforces reports green; and plant a fixture that makes every
+pattern class go red before the word "clean" is allowed in the report. Deliberately
+standalone: cleanup bundled into an end-of-session flow is how accidental deletions happen.
 
 ### `/vet-repo` — quarantine and vet an untrusted repo
 

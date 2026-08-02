@@ -52,6 +52,19 @@ Cheapest → most capable: `haiku` → `sonnet` → `opus` (stable aliases — u
   2. For a bounded hard sub-task, spawn a subagent with a higher model override (e.g. `opus`; effort comes from the agent definition, not the spawn) and keep the main thread lean — the spike lives in the subagent; the main thread never leaves the low rung.
 - If any listed alias no longer resolves, use the current lineup — the ladder logic is canonical, the IDs are not.
 
+## Recalibrating after a model upgrade
+
+A new frontier model changes what "lean" costs and what the failure modes are, so re-derive these before assuming the old settings still hold. The findings below came from calibration passes on a top-tier 2026 model, and are worth re-running rather than inheriting:
+
+- **Boot effort may already be high, and that is fine.** "Start lean" governs *behavior* — targeted reads, no subagents, concise output — not an automatic descent below the saved default. Descend explicitly for mechanical stretches. A strong model stays strong at low effort, which makes descents cheap and safe; reserve the top effort tier for the hardest coding and agentic stretches.
+- **Newer models delegate to subagents more readily than their predecessors.** Where the old default was a nudge, the no-subagents default now has to be a hard cap. Keep spawn counts low, brief a subagent precisely once, commit to the delegation, and never redo its work.
+- **They also self-verify unprompted.** Adding generic "double-check your answer" language to prompts buys over-verification and no quality gain. Incident-derived checks are a different category — those stay.
+- **File claims need fresh receipts.** Never state that a file exists, is missing, or was created without a listing from *this* session. A stronger model asserts inferred or stale paths confidently, which is worse than guessing visibly. An exact-path miss means globbing name and slug variants before concluding "not there."
+- **Edit over create.** Modifying the existing file is the default; a new file requires a verified absence or an explicit ask.
+- **Commit to a path.** Decide once, execute. Reversing the chosen approach twice on the same task means stopping and presenting the fork to the user rather than oscillating.
+
+The last three are behavioral guards. They buy no tokens back; they cost nothing at any tier and they catch the errors that a fluent model makes most confidently.
+
 ## Stop Rule
 
 If the revved tier still cannot resolve the task after two focused attempts, or progress is blocked by missing permissions, unavailable tools, or missing source context, stop and report: what is blocked, what was tried, and the smallest next input, approval, or decision needed.
