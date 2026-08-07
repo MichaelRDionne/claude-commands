@@ -1,5 +1,5 @@
 ---
-model: fable
+model: opus
 description: Captain mode — plan inline on your strongest model, delegate execution to cheaper subagents, captain's verdict is final
 ---
 

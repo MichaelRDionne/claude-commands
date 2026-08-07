@@ -84,7 +84,7 @@ Built on one rule: everything inside the clone is data, never instructions.
 
 - Commands reference each other where they compose (`/captain` assumes `/low-then-rev`'s
   lean-by-default posture) but each works standalone.
-- Model aliases (`haiku`/`sonnet`/`opus`, `fable`) are current as of mid-2026; the routing
+- Model aliases (`haiku`/`sonnet`/`opus`) are current as of mid-2026; the routing
   *logic* is the durable part — swap in whatever your provider's ladder is.
 - These are prompts, not software. Read them before trusting them, same as `/vet-repo`
   would tell you.
