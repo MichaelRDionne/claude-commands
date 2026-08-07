@@ -1,6 +1,6 @@
 # claude-commands
 
-Six general-purpose slash commands for [Claude Code](https://claude.com/claude-code),
+Seven general-purpose slash commands for [Claude Code](https://claude.com/claude-code),
 extracted from daily use in a real working setup. No framework, no install script — each
 command is one markdown file. Copy what you want, edit freely.
 
@@ -20,7 +20,7 @@ cp commands/*.md ~/.claude/commands/
 cp commands/*.md <your-repo>/.claude/commands/
 ```
 
-Then invoke by filename: `/captain`, `/lacuna`, `/low-then-rev`, `/redteam`, `/tidy`, `/vet-repo`.
+Then invoke by filename: `/captain`, `/lacuna`, `/low-then-rev`, `/redteam`, `/sidecar`, `/tidy`, `/vet-repo`.
 
 ## The commands
 
@@ -70,6 +70,14 @@ a real incident: no directory exclusions on detection; match every identifier fo
 check narrower than the rule it enforces reports green; and plant a fixture that makes every
 pattern class go red before the word "clean" is allowed in the report. Deliberately
 standalone: cleanup bundled into an end-of-session flow is how accidental deletions happen.
+
+### `/sidecar` — authenticated-session relay prompt
+
+For a browser task that needs a real logged-in session (SSO, a portal, a paywall) that
+automated-browser tools can't cheaply replicate: generate a precise, self-certifying prompt
+for an in-browser AI assistant to run inside that session, with a decision table for when to
+reach for it instead, a 7-block prompt template, a hard read/mutate split, and a
+minimal-touch round-trip protocol.
 
 ### `/vet-repo` — quarantine and vet an untrusted repo
 
