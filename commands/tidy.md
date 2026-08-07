@@ -35,17 +35,21 @@ Rule 3 was added after the third recurrence of the same shape. Rules 1 and 2 wer
 
 Also open the **cache payloads** — plugin caches, tool logs, page-snapshot directories. Deleting a source file does not remove its cache record; in the originating setup a sensitive name survived in a plugin cache after every other copy was gone. And report the **copy surfaces**: sync services, backups, and version history a finding has already reached — "it's only local" is usually false.
 
+**A plain grep or read on a PDF or other binary file returns garbage or nothing — that is not a content check.** Extract the text layer first (`pdftotext <file> -` or an equivalent) before treating a PDF as scanned. That extraction has its own blind spot: it reads the text layer only, so a fillable or prefilled form's field *values* are invisible to it — in the originating setup a prefilled application produced over a thousand words of extracted text and zero hits on a field that was, in fact, filled in more than twenty places. For fillable or prefilled PDFs, also dump the form-field values with a forms-aware library, and report field names and fill status rather than the values themselves. Where no extractor ran at all, say so explicitly — "binary payloads: existence confirmed, content not checked" — rather than letting a directory listing imply text-level coverage it never had.
+
 Report paths and identifier *categories* with counts. Never quote the sensitive content itself. Findings are Tier-B: disposition is the operator's call, and any evacuation must be checksum-verified at the destination before anything is deleted.
 
 ## The scan
 
 1. **Stray root files (Tier A).** Define what the root of your workspace should contain; anything else loose there (`.zip`, scratch `.md`, exports, screenshots) is flagged "stray in root."
-2. **Backup/temp cruft (Tier A).** `*.bak`, `*.tmp`, `*.orig`, `*~`, `.DS_Store`, and empty non-index files:
+2. **Backup/temp cruft (Tier A).** `*.bak`-shaped files, `*.tmp`, `*.orig`, `*~`, `.DS_Store`, and empty non-index files:
    ```bash
    find . -type d \( -name .git -o -path './archives*' \) -prune -o \
-     -type f \( -name '*.bak' -o -name '*.tmp' -o -name '*.orig' -o -name '*~' -o -name '.DS_Store' \) -print
+     -type f \( -iname '*bak*' -o -iname '*backup*' -o -name '*.tmp' -o -name '*.orig' \
+     -o -name '*.old' -o -name '*.save' -o -name '*~' -o -name '.DS_Store' \) -print
    find . -type f -empty ! -name 'README.md' ! -name 'INDEX.md' -print
    ```
+   The narrow form of this pattern (`-name '*.bak'` alone) missed a real backup file in the originating setup — a suffix like `something.doctor-bak` has no dot before `bak`, so an exact-suffix match sails past it. The broadened form above catches that shape, plus editor auto-backups (`Backup of *.docx`), at the cost of also matching legitimate files: backup *scripts*, directories named for what they back up. Triage the broadened matches by hand rather than bulk-classifying them Tier-A. And before calling any match a duplicate, checksum it against the file it looks like a copy of — an older revision is not a duplicate, and more than one "obvious backup" in the originating setup turned out to be draft history worth keeping.
 3. **Untriaged inbox (route, don't prune).** If your workspace has a triage folder, report the count and route to whatever files it — filing is that flow's job, not this one's.
 4. **Broken internal links (Tier B).** Spot-check high-traffic files for links that resolve to nothing; report file + line as fix candidates. Keep it bounded — don't lint every link every run.
 5. **Orphans & duplicates (Tier B).** Files nothing links to, and obvious copies (`foo (1).md`, `foo-copy.md`). Many orphans are legitimate — present each with a one-line "what it is" and let the operator pick keepers.
