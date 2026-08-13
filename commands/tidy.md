@@ -44,11 +44,14 @@ Report paths and identifier *categories* with counts. Never quote the sensitive 
 1. **Stray root files (Tier A).** Define what the root of your workspace should contain; anything else loose there (`.zip`, scratch `.md`, exports, screenshots) is flagged "stray in root."
 2. **Backup/temp cruft (Tier A).** `*.bak`-shaped files, `*.tmp`, `*.orig`, `*~`, `.DS_Store`, and empty non-index files:
    ```bash
-   find . -type d \( -name .git -o -path './archives*' \) -prune -o \
+   find . -type d \( -name .git -o -path './archives*' -o -path './protected-store*' \) -prune -o \
      -type f \( -iname '*bak*' -o -iname '*backup*' -o -name '*.tmp' -o -name '*.orig' \
      -o -name '*.old' -o -name '*.save' -o -name '*~' -o -name '.DS_Store' \) -print
-   find . -type f -empty ! -name 'README.md' ! -name 'INDEX.md' -print
+   find . -type d \( -name .git -o -path './archives*' -o -path './protected-store*' \) -prune -o \
+     -type f -empty ! -name 'README.md' ! -name 'INDEX.md' -print
    ```
+   **Every scan command names the protected store in its own prune list** — including the throwaway second one that only looks for empty files. Replace `./protected-store*` with the real path of yours; a prune pattern matching nothing is the same as no prune at all. Step 0's sweep excludes it explicitly; a later `find` that doesn't inherits the exclusion only for as long as the operator re-derives it correctly, every run, from memory. In the originating setup that gap was live: the cruft scan walked into a mounted encrypted container and surfaced one internal filename before the operator caught it, corrected the command, and re-ran clean. No content was read and nothing was deleted. The fix still belongs in the command text, because a hard exclusion you have to remember is a soft one.
+
    The narrow form of this pattern (`-name '*.bak'` alone) missed a real backup file in the originating setup — a suffix like `something.doctor-bak` has no dot before `bak`, so an exact-suffix match sails past it. The broadened form above catches that shape, plus editor auto-backups (`Backup of *.docx`), at the cost of also matching legitimate files: backup *scripts*, directories named for what they back up. Triage the broadened matches by hand rather than bulk-classifying them Tier-A. And before calling any match a duplicate, checksum it against the file it looks like a copy of — an older revision is not a duplicate, and more than one "obvious backup" in the originating setup turned out to be draft history worth keeping.
 3. **Untriaged inbox (route, don't prune).** If your workspace has a triage folder, report the count and route to whatever files it — filing is that flow's job, not this one's.
 4. **Broken internal links (Tier B).** Spot-check high-traffic files for links that resolve to nothing; report file + line as fix candidates. Keep it bounded — don't lint every link every run.
