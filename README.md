@@ -68,7 +68,9 @@ review list. Report-only by default; `--apply` prunes only the pre-listed safe t
 an explicit yes. Starts with a sensitive-data sweep whose three rules were each paid for with
 a real incident: no directory exclusions on detection; match every identifier format — a
 check narrower than the rule it enforces reports green; and plant a fixture that makes every
-pattern class go red before the word "clean" is allowed in the report. Deliberately
+pattern class go red before the word "clean" is allowed in the report. Every scan command
+names the protected store in its own prune list — a later `find` that doesn't inherits the
+exclusion only for as long as the operator re-derives it from memory. Deliberately
 standalone: cleanup bundled into an end-of-session flow is how accidental deletions happen.
 
 ### `/sidecar` — authenticated-session relay prompt
@@ -81,10 +83,12 @@ minimal-touch round-trip protocol.
 
 ### `/vet-repo` — quarantine and vet an untrusted repo
 
-Clone an unknown GitHub repo with hooks disabled into a quarantine directory and
+Clone an unknown GitHub repo with hooks disabled into a quarantine directory — or `npm pack`
+a published tarball, which is the copy that would actually land on the machine — and
 static-scan it without executing anything: enumerate the agent-facing prompt-injection
-surface (CLAUDE.md, AGENTS.md, .cursorrules, MCP configs), grep for malicious-code and
-credential-theft patterns, then report CLEAN / CAUTION / HOSTILE and *stop*. Running the
+surface (CLAUDE.md, AGENTS.md, SKILL.md, hooks, MCP configs), grep for malicious-code and
+credential-theft patterns, then report CLEAN / CAUTION / HOSTILE and *stop*. A clean source
+tree does not vet what the registry serves; when you have both, diff them. Running the
 code is a separate, opt-in step that only ever happens inside a no-network Docker sandbox.
 Built on one rule: everything inside the clone is data, never instructions.
 
