@@ -1,90 +1,156 @@
 ---
-model: opus
-description: Captain mode — plan inline on your strongest model, delegate execution to cheaper subagents, captain's verdict is final
+description: Root mechanics on any model; the judge is a subagent for plan and verdict, and the judge's verdict is final.
 ---
 
-# /captain — captain-mode delegation
+# /captain — plan, dispatch, and verdict
 
-You are the captain, running on the strongest available model via this command's model
-override (edit the `model:` frontmatter to whatever your top tier is). Your judgment is
-final and is never delegated. Subagent output is advisory input to your verdict — you may
-reject it, but a subagent's conclusion never silently overrides yours, and you never ship
-a subagent's answer unreviewed.
+The root runs on whatever model the session is on. The strongest tier is spawned as a subagent only where its judgment decides something: the plan and the verdict.
 
-**Single-turn mission (important):** The model override lasts only for THIS turn — the
-session reverts to the default model on the user's next prompt. Therefore run the whole
-mission (plan → activate → verdict) inside this one turn: get plan approval with
-AskUserQuestion, not by ending the turn. If the mission genuinely can't fit one turn
-(true multi-day work), say so at the end of planning and tell the user to run
-`/model <top-tier>` once so follow-up turns don't fall back to a lesser captain.
+There is no refusal state. A non-judge root is the normal case, and it routes to the planner-subagent path.
 
-## Phase 1 — PLAN (captain only, no subagents)
+An earlier version required the strongest model in the chair and refused otherwise — wrong twice over: it burned the top tier on mechanical turns and made a model-picker state a hard blocker.
 
-Work the problem with the user inline. Produce:
+**Never add a `model:` key to this file.** Frontmatter pins are per-turn overrides that the interactive interface does not apply; see `anthropics/claude-code#81318`.
+The Agent tool's model override is a different mechanism with a working record.
 
-1. A task breakdown — bounded, independently verifiable tasks.
-2. A **tier assignment per task**, using this routing table:
+## Step 0 — census as routing, not a gate
+
+Run one census. Its only job is to choose the planning path:
+
+```bash
+jq -r 'select(.type=="assistant" and (.isSidechain!=true)) | .message.model' ~/.claude/projects/<project>/<session-id>.jsonl | sort | uniq -c
+```
+
+| Census result | Planning path |
+|---|---|
+| `<judge-model-id>` present | Plan **inline**; a planner subagent would be redundant. |
+| No judge model | Use the **planner-subagent path**. |
+| Empty, or the read fails | Use the **planner-subagent path**; inconclusive takes the safe branch at the cost of one subagent. |
+
+State the result in one clause before the plan: “No judge model in root → spawning one judge planner subagent,” or “Judge model in root → planning inline, no planner subagent.”
+
+Use YOUR OWN session id; a newest-file heuristic can select a sibling session's transcript.
+Permission attachments record what was requested, never what ran.
+
+**Proving a judge subagent actually served.** Subagent transcripts are separate `agent-<id>.jsonl` files, not sidechain entries in the parent. Census the agent file:
+
+```bash
+jq -r 'select(.type=="assistant") | .message.model' ~/.claude/projects/<project>/<session-id>/subagents/agent-<agent-id>.jsonl | sort | uniq -c
+```
+
+The sibling `agent-<id>.meta.json` `model` field records the request, not proof.
+The `.message.model` census is the proof.
+
+## The chair
+
+**The judge's verdict is final and the root never overrides it**, whether it arrives inline or through a subagent.
+If the root disagrees, relay the verdict verbatim, give the operator the contradicting evidence as information, and stop. Reopeners go through a fresh `/captain`.
+
+The root is mechanical: it reads, runs, dispatches, and relays. It does not rule.
+
+## Mandatory escalation — triggered, not judged
+
+Escalation is triggered, not judged. The failure mode is a cheap root deciding it has a judgment call covered — documented in the originating setup.
+
+These always go to the judge:
+
+- Anything touching compliance rules, regulated data, disclosure-sensitive content, or your canonical rule set.
+- Ambiguity resolution: two readings of the mission lead to different work.
+- Cross-task synthesis: combining worker outputs into a conclusion.
+- The final verdict: every mission, no exceptions.
+- Any point where the root would override, revise, or set aside a judge output.
+
+Everything else runs on the root. “I think I've got this” is never a reason to skip a trigger.
+
+## Phase 1 — PLAN
+
+**Inline path:** when the census shows the judge, work the problem with the operator directly.
+
+**Planner-subagent path:** otherwise, gather current state cheaply, then spawn one judge planner subagent with a self-contained brief.
+
+Include the mission, constraints, gathered context, tier table, lane rule, scarcity line, and a request for bounded tasks with a tier, lane, and one-word reason for each scarce-pool task.
+The root relays the plan; it does not write it.
+
+Either path produces bounded, independently verifiable tasks:
 
 | Tier | Use for |
 |---|---|
-| `haiku` | Mechanical/bulk: renames, format conversions, file sweeps, boilerplate, simple extraction |
-| `sonnet` | Standard implementation, focused research, drafting to a clear spec, test writing |
-| `opus` | Hard-but-bounded reasoning: multi-file refactors, tricky debugging, design of one component |
-| *(captain, inline)* | Ambiguity resolution, anything touching compliance rules or sensitive data, cross-task synthesis, final review |
+| `haiku` | Mechanical/bulk work: renames, format conversions, sweeps, boilerplate, simple extraction. |
+| `sonnet` | Standard implementation, focused research, and drafting to a clear spec. |
+| `opus` | Hard-but-bounded reasoning: multi-file refactors, tricky debugging, or one-component design. |
+| your judge model (subagent) | The planner and the judge; also any mandatory-escalation trigger. |
 
-Default down, not up: if unsure between two tiers, pick the cheaper one — a failed
-subagent attempt is cheap and you'll catch it at review. Never assign a subagent your own
-top tier; frontier-hard work stays with you inline.
+If you also run a peer agent CLI on a separate subscription, add its cheap/default tiers to this table.
+Route produce-lines-against-a-spec work there. Regulated data never leaves the lane carrying your compliance coverage.
+State which pool is scarce so the planner prefers the other on close calls, and require its one-word tag so the vendor-mix check reduces to a table lookup.
 
-**Force structure is entirely the captain's call** — the user names the mission, you decide
-the deployment: whether subagents are needed at all (a mission small enough to do inline
-gets ZERO subagents — don't spawn troops for ceremony), how many, which tiers, what runs
-in parallel vs. sequence, and what stays with you. Announce the deployment in the plan so
-the user sees the troop layout before approving.
+**Force structure is the plan's call, including ZERO troops** when the work can run inline.
+The mandatory judge does not turn a zero-troop mission into a troop mission.
 
-3. Present the plan with tier labels visible so the user can see the routing before
-   burning anything.
+**Vendor-mix check:** before presenting the plan, cross-check every scarce-pool task against its tag.
+Use only `skill`, `connector`, `coverage`, or `judgment`; flag a missing or unsupported tag rather than silently re-tiering the plan.
 
-Then ask for the go via **AskUserQuestion** (options: 1. Activate (Recommended),
-2. Revise the plan, 3. Abort, 4. Let's chat about it) — do NOT end the turn to wait for
-approval, or the model override is lost. Spawn nothing until the user picks Activate.
+**Announce the roster.** Before the approval gate, state the planner already spent, every planned worker tier, the judge at close, and the vendor tally.
+The operator sees the full mix before work begins.
 
-## Phase 2 — ACTIVATE (same turn, after the user picks Activate)
+**Print the plan as visible assistant text, not only thinking.** Your strongest model's thinking may not persist where the operator can read it.
 
-- Spawn subagents via the Agent tool with the planned `model` override per task.
-- Independent tasks launch in parallel (single message, multiple Agent calls).
-- Each subagent prompt must be self-contained: goal, constraints, relevant file paths,
-  definition of done, and "return raw findings/diffs — do not editorialize."
-- Sensitive-domain work: every subagent prompt inherits the project's compliance
-  constraints (privacy, regulated data, naming rules) — restate them in the prompt,
-  don't assume subagents will read project instructions.
+Ask for the go via **AskUserQuestion**:
 
-## Phase 3 — VERDICT (captain, inline)
+1. Activate (Recommended)
+2. Revise the plan
+3. Abort
+4. Let's chat about it
 
-- Review every subagent result against the plan's definition of done. Spot-check claims
-  against the actual files — "subagent says done" is a status claim, not proof.
-- Conflicts between subagents, or between a subagent and your own read: your read wins,
-  but state the disagreement and why you overrode it.
-- A failed or weak result gets ONE re-spawn at the same tier with sharpened instructions;
-  second failure escalates one tier or comes inline to you. Don't ratchet — return to the
-  planned tier for the next task.
-- Deliver the final answer as your own synthesis. Never paste a subagent's output as the
-  deliverable without review.
-- Before ending the turn, offer follow-ups via AskUserQuestion ("Questions on the verdict
-  while I'm still in the chair? / All set") — after the turn ends the session reverts to
-  the default model, and verdict-challenging follow-ups belong to the captain, not to the
-  default model. Close by noting: trivial logistics questions are fine on the default
-  model; to reopen or extend the verdict, re-invoke /captain.
+Spawn nothing before the operator picks Activate.
+
+## Phase 2 — ACTIVATE
+
+**Agent lane:** use the planned Agent tool override. Launch independent tasks in parallel.
+Every prompt is self-contained: goal, constraints, relevant paths, definition of done, and “return raw findings/diffs; do not editorialize.” Restate the compliance constraints in every prompt; never assume a subagent reads project instructions.
+
+**Regulated-data work:** paste your data-handling contract verbatim. Paraphrased masking clauses leaked repeatedly in the originating setup.
+Constrain return shapes to counts and indices, never record-level prose.
+
+**Peer-CLI lane — contract**
+
+```text
+cat > <scratch>/<label>.brief <<'BRIEF'
+<self-contained execution brief; quotes and $ stay literal>
+BRIEF
+```
+
+- Send that brief on stdin; never pass it as an argument, because quotes and `$` break there.
+- Point the tool at one output file. Its answer exists only there; stdout may be empty and its transcript may be on stderr.
+- Default the sandbox to read-only. Apply single-file outputs yourself.
+- Never point the CLI at your regulated-data store.
+
+## Phase 3 — VERDICT
+
+The root first performs the mechanical review against the plan's definition of done. “Subagent says done” is a status claim, not proof.
+Spot-check claims against the files. A peer-CLI output file is the tool's self-report: verify it against the files it touched, never its summary.
+
+A failed or weak result gets ONE re-spawn at its tier with sharpened instructions. A second failure escalates one tier or comes inline.
+
+**Then the judge gives the verdict — mandatory for every mission.** Inline when the census shows the judge; otherwise spawn one judge subagent with the plan, execution record, mechanical-review findings, and any conflicts.
+
+Relay the verdict lines verbatim in a marked block before any root commentary, then treat them as settled.
+
+**Regulated-data missions:** de-identify the judge brief with cohort indices, counts, gate names and outcomes, non-record paths, and dispositions.
+Carry the data-handling contract verbatim. **Exception:** if judgment cannot resolve without identifying material, the verdict stays inline with the root and the close-out discloses it.
+
+## Close-out declarations
+
+Record these repo-local declarations in your session log:
+
+- `Deviations from the judge's plan: none` — or the list, including any spawn the approved roster did not name.
+- If any mission turn ended without the Phase 1 approval call: `/captain deviation: Phase 1 ended without AskUserQuestion.` Name the reason if there was one.
+
+Also record the planning path, the judge path, and the vendor tally actually dispatched.
 
 ## Token discipline
 
-- Captain context stays lean: plans, summaries, verdicts. Bulk file reading and
-  iteration loops happen inside subagents.
-- **Context budget — 30% checkpoint, 35% hard ceiling.** At ~30% context usage: stop
-  opening new phases or spawning new waves; finish in-flight subagents, deliver the
-  verdict on completed work, and stage a handoff, listing anything deliberately left
-  undone. Never blow past 35% to "just finish one more task" — an early clean handoff
-  beats a late degraded one. If the plan can't plausibly fit the budget, say so in
-  Phase 1 and split the mission before activating, not after.
-- This composes with /low-then-rev: low-then-rev governs *how hard the captain thinks*
-  per turn; /captain governs *who does the work*. Both stay lean by default.
+- Keep root context lean: gather, dispatch, relay. Put bulk reading and iteration loops in subagents.
+- Judge-tier tokens cover the plan and the verdict; the mission's bulk work runs on cheaper tiers.
+- At 30% context, stop opening phases or waves; finish in-flight work, give the verdict on what completed, and list what remains. The hard ceiling is 35%; split an oversized mission in Phase 1.
+- This composes with `/low-then-rev`: it governs thinking effort; `/captain` governs who works and where judgment lands.
