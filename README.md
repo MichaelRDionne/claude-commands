@@ -26,11 +26,12 @@ Then invoke by filename: `/captain`, `/lacuna`, `/low-then-rev`, `/redteam`, `/s
 
 ### `/captain` — captain-mode delegation
 
-Runs the turn on your strongest model (via `model:` frontmatter — edit it to your top
-tier), which plans inline, routes bounded tasks down to cheaper subagents
-(haiku/sonnet/opus per a routing table), then reviews everything and delivers its own
-verdict. The inversion that matters: the expensive model does the judging while cheap
-models do the typing.
+The root stays mechanical on whatever model the session is on. A judge subagent
+writes the plan and the verdict; that verdict is final. An earlier version
+required the strongest model in the chair and refused otherwise — that burned
+the top tier on mechanical turns and made a model-picker state a hard blocker.
+Do not add a `model:` key to the file (frontmatter pins are per-turn overrides
+the interactive interface does not apply; see `anthropics/claude-code#81318`).
 Includes a context budget (30% checkpoint / 35% ceiling) and a
 plan-approval gate so nothing spawns before you see the troop layout.
 
