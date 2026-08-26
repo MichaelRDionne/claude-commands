@@ -122,8 +122,12 @@ BRIEF
 
 - Send that brief on stdin; never pass it as an argument, because quotes and `$` break there.
 - Point the tool at one output file. Its answer exists only there; stdout may be empty and its transcript may be on stderr.
-- Default the sandbox to read-only. Apply single-file outputs yourself.
-- Never point the CLI at your regulated-data store.
+- **A read-only sandbox flag is not containment. Treat every dispatch as write-capable.** Reproduced twice in the originating setup: a worker dispatched read-only edited three files in the live tree, and a minimal probe told to write a canary reported success with the canary sitting on disk afterward. Pass the flag — it costs nothing — but it may never again be the reason a dispatch is considered safe.
+- **Containment has to be structural:** an isolated copy, a narrowed working directory, or a before/after manifest of the target tree. Prefer the manifest whenever the CLI runs against live paths, because it is the only one of the three that catches a write you did not predict. A receipt whose safety argument rested on the sandbox flag attests to the brief's declared scope and says nothing about what the process could reach.
+- Single-file output survives as the safe pattern: the CLI writes to its output file and the root applies the edit. That safety comes from the root doing the write, which was never the sandbox's doing.
+- **Read a CLI-produced test file in full before copying it into the real directory.** A test file is code that runs, and a skim is not a read.
+- **Scratch files go to the session scratchpad, never `/tmp`.** Temp is reboot-volatile, so a fixture left there is gone before the next session can re-gate on it.
+- Never point the CLI at your regulated-data store. Never disable approvals and sandboxing outright, and never pair a write-capable sandbox with a working directory at the root of your live tree.
 
 ## Phase 3 — VERDICT
 
@@ -135,6 +139,8 @@ A failed or weak result gets ONE re-spawn at its tier with sharpened instruction
 **Then the judge gives the verdict — mandatory for every mission.** Inline when the census shows the judge; otherwise spawn one judge subagent with the plan, execution record, mechanical-review findings, and any conflicts.
 
 Relay the verdict lines verbatim in a marked block before any root commentary, then treat them as settled.
+
+**Re-run the Step 0 census immediately before you write the verdict.** The census taken at mission start records which model planned. A context compaction or a model switch partway through can land the verdict on a different model, and any close-out identity check reads the transcript rather than your memory of it. One `jq` line, right before the marked block.
 
 **Regulated-data missions:** de-identify the judge brief with cohort indices, counts, gate names and outcomes, non-record paths, and dispositions.
 Carry the data-handling contract verbatim. **Exception:** if judgment cannot resolve without identifying material, the verdict stays inline with the root and the close-out discloses it.
