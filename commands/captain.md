@@ -106,6 +106,8 @@ Spawn nothing before the operator picks Activate.
 
 ## Phase 2 — ACTIVATE
 
+**Bare-maximal-instruction carve-out (operator ruling):** a bare maximal instruction from the operator ("fix all", "do all", "fix all remaining") licenses troop dispatch WITHOUT the plan-approval gate, provided the scope ruling is stated openly in the first reply and every named-risk act (external-system state changes, public pushes, deletions, new surfaces) still gets its own explicit approval question. Missions not opened with a maximal instruction keep the full gate.
+
 **Agent lane:** use the planned Agent tool override. Launch independent tasks in parallel.
 Every prompt is self-contained: goal, constraints, relevant paths, definition of done, and “return raw findings/diffs; do not editorialize.” Restate the compliance constraints in every prompt; never assume a subagent reads project instructions.
 
@@ -135,6 +137,8 @@ The root first performs the mechanical review against the plan's definition of d
 Spot-check claims against the files. A peer-CLI output file is the tool's self-report: verify it against the files it touched, never its summary.
 
 A failed or weak result gets ONE re-spawn at its tier with sharpened instructions. A second failure escalates one tier or comes inline.
+
+**Fresh-maximal-instruction reopener (operator ruling):** a ruling the session minted FOR ITSELF (e.g. "no further root attempts — operator decides") is reopened by a fresh maximal instruction from the operator; that instruction sanctions ONE verbatim retry of each blocked item, disclosed in the next verdict's deviations line. Operator-decided calls are NOT covered — those reopen only through the operator or a new mission.
 
 **Then the judge gives the verdict — mandatory for every mission.** Inline when the census shows the judge; otherwise spawn one judge subagent with the plan, execution record, mechanical-review findings, and any conflicts.
 
